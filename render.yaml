@@ -4,7 +4,7 @@ services:
     name: dispatch-api
     env: node
     rootDir: backend
-    buildCommand: npm install && npm run build
+    buildCommand: npm install --include=dev && npm run build
     startCommand: node dist/server.js
     envVars:
       - key: NODE_ENV
@@ -31,7 +31,7 @@ services:
     name: dispatch-worker
     env: node
     rootDir: backend
-    buildCommand: npm install && npm run build
+    buildCommand: npm install --include=dev && npm run build
     startCommand: node dist/worker.js
     envVars:
       - key: NODE_ENV
