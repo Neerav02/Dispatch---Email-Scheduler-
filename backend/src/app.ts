@@ -14,10 +14,17 @@ export const app = express();
 
 app.use(
   cors({
-    origin: [config.frontendUrl, 'http://localhost:3000'],
+    origin: (origin, callback) => {
+      // Allow requests with no origin (mobile apps, curl, postman) or matching frontend/vercel/localhost
+      if (!origin || origin.includes('vercel.app') || origin.includes('localhost') || origin === config.frontendUrl) {
+        callback(null, true);
+      } else {
+        callback(null, true); // Permissive CORS for hackathon demo compatibility
+      }
+    },
     credentials: true,
     methods: ['GET', 'POST', 'PUT', 'DELETE', 'OPTIONS'],
-    allowedHeaders: ['Content-Type', 'Authorization', 'X-Demo-Mode'],
+    allowedHeaders: ['Content-Type', 'Authorization', 'X-Demo-Mode', 'x-demo-mode'],
   })
 );
 
