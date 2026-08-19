@@ -225,10 +225,15 @@ export const authController = {
 
   // Google OAuth Success Callback Handler
   googleCallback: async (req: Request, res: Response) => {
+    const targetFrontend =
+      config.frontendUrl && config.frontendUrl !== 'http://localhost:3000'
+        ? config.frontendUrl
+        : 'https://dispatch-email-scheduler.vercel.app';
+
     try {
       const user = req.user as any;
       if (!user) {
-        return res.redirect(`${config.frontendUrl}/login?error=oauth_failed`);
+        return res.redirect(`${targetFrontend}/login?error=oauth_failed`);
       }
 
       const token = jwt.sign(
@@ -244,10 +249,10 @@ export const authController = {
         maxAge: 7 * 24 * 60 * 60 * 1000,
       });
 
-      return res.redirect(`${config.frontendUrl}/dashboard`);
+      return res.redirect(`${targetFrontend}/dashboard`);
     } catch (error: any) {
       logger.error('Google callback error:', error);
-      return res.redirect(`${config.frontendUrl}/login?error=oauth_failed`);
+      return res.redirect(`${targetFrontend}/login?error=oauth_failed`);
     }
   },
 

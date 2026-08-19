@@ -1,4 +1,4 @@
-const API_BASE_URL = process.env.NEXT_PUBLIC_API_BASE_URL || 'http://localhost:5000/api';
+const API_BASE_URL = process.env.NEXT_PUBLIC_API_BASE_URL || 'https://dispatch-api-o2bf.onrender.com/api';
 
 export async function fetchApi<T = any>(endpoint: string, options: RequestInit = {}): Promise<T> {
   const isDemo = typeof window !== 'undefined' && localStorage.getItem('dispatch_demo_mode') === 'true';
