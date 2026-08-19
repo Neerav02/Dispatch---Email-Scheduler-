@@ -1,0 +1,79 @@
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+}
+
+enum Status {
+  queued
+  in_flight
+  holding
+  sent
+  failed
+}
+
+model User {
+  id           String     @id @default(uuid())
+  googleId     String?    @unique
+  email        String     @unique
+  passwordHash String?
+  name         String
+  avatarUrl    String?
+  createdAt    DateTime   @default(now())
+  updatedAt    DateTime   @updatedAt
+  senders      Sender[]
+  campaigns    Campaign[]
+}
+
+model Sender {
+  id         String     @id @default(uuid())
+  userId     String
+  user       User       @relation(fields: [userId], references: [id], onDelete: Cascade)
+  label      String
+  smtpFrom   String
+  maxPerHour Int        @default(200)
+  createdAt  DateTime   @default(now())
+  updatedAt  DateTime   @updatedAt
+  campaigns  Campaign[]
+}
+
+model Campaign {
+  id              String           @id @default(uuid())
+  userId          String
+  user            User             @relation(fields: [userId], references: [id], onDelete: Cascade)
+  senderId        String
+  sender          Sender           @relation(fields: [senderId], references: [id], onDelete: Cascade)
+  subject         String
+  body            String
+  startTime       DateTime
+  delayMs         Int              @default(1000)
+  maxPerHour      Int              @default(200)
+  createdAt       DateTime         @default(now())
+  updatedAt       DateTime         @updatedAt
+  scheduledEmails ScheduledEmail[]
+}
+
+model ScheduledEmail {
+  id             String    @id @default(uuid())
+  campaignId     String
+  campaign       Campaign  @relation(fields: [campaignId], references: [id], onDelete: Cascade)
+  recipient      String
+  sendAt         DateTime
+  status         Status    @default(queued)
+  heldReason     String?
+  sentAt         DateTime?
+  openedAt       DateTime?
+  clickedAt      DateTime?
+  targetTimezone String?   @default("UTC")
+  stepNumber     Int       @default(1)
+  etherealUrl    String?
+  errorMessage   String?
+  createdAt      DateTime  @default(now())
+  updatedAt      DateTime  @updatedAt
+
+  @@index([status, sendAt])
+  @@index([campaignId])
+}
