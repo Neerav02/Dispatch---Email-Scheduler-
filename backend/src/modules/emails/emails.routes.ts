@@ -5,8 +5,8 @@ import { requireAuth } from '../../middleware/auth';
 const router = Router();
 
 router.use(requireAuth as any);
-router.get('/', emailsController.getEmails);
-router.get('/runway', emailsController.getRunway);
-router.get('/rate-limit/usage', emailsController.getRateLimitUsage);
+router.get('/', emailsController.getEmails as any);
+router.get('/runway', emailsController.getRunway as any);
+router.get('/rate-limit/usage', emailsController.getRateLimitUsage as any);
 
 export default router;

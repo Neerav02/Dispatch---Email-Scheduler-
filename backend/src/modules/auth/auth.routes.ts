@@ -13,7 +13,7 @@ router.post('/login', authController.login);
 router.post('/demo', authController.demoLogin);
 
 // Current User Metadata
-router.get('/me', requireAuth as any, authController.getCurrentUser);
+router.get('/me', requireAuth as any, authController.getCurrentUser as any);
 
 // Logout
 router.post('/logout', authController.logout);

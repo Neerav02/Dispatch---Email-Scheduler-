@@ -6,7 +6,7 @@ import { prisma } from '../db/client';
 export interface AuthenticatedRequest extends Request {
   user?: {
     id: string;
-    googleId: string;
+    googleId?: string | null;
     email: string;
     name: string;
     avatarUrl?: string | null;

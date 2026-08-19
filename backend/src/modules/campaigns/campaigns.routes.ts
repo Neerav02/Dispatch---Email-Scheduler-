@@ -5,6 +5,6 @@ import { requireAuth } from '../../middleware/auth';
 const router = Router();
 
 router.use(requireAuth as any);
-router.post('/', campaignsController.createCampaign);
+router.post('/', campaignsController.createCampaign as any);
 
 export default router;
