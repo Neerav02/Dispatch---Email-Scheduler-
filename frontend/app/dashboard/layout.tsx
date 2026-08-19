@@ -1,38 +1,54 @@
 'use client';
 
-import { useState, useEffect } from 'react';
+import { useState, useEffect, Suspense } from 'react';
 import { useQuery } from '@tanstack/react-query';
-import { fetchApi } from '@/lib/api-client';
+import { fetchApi, setToken, getToken } from '@/lib/api-client';
 import { User } from '@/lib/types';
-import { useRouter, usePathname } from 'next/navigation';
+import { useRouter, usePathname, useSearchParams } from 'next/navigation';
 import SideRail from '@/components/layout/SideRail';
 import TopBar from '@/components/layout/TopBar';
 import RunwayLane from '@/components/runway/RunwayLane';
 import ComposeDrawer from '@/components/compose/ComposeDrawer';
 import Background3D from '@/components/canvas/Background3D';
 
-export default function DashboardLayout({ children }: { children: React.ReactNode }) {
+function DashboardContent({ children }: { children: React.ReactNode }) {
   const router = useRouter();
   const pathname = usePathname();
+  const searchParams = useSearchParams();
   const [isComposeOpen, setIsComposeOpen] = useState(false);
+  const [tokenReady, setTokenReady] = useState(false);
+
+  // On mount: check for token in URL (Google OAuth redirect) and store it
+  useEffect(() => {
+    const urlToken = searchParams.get('token');
+    if (urlToken) {
+      setToken(urlToken);
+      // Clean the token from the URL without reloading
+      const url = new URL(window.location.href);
+      url.searchParams.delete('token');
+      window.history.replaceState({}, '', url.pathname);
+    }
+    setTokenReady(true);
+  }, [searchParams]);
 
   const { data, isLoading, error } = useQuery<{ data: User }>({
     queryKey: ['me'],
     queryFn: () => fetchApi('/auth/me'),
     retry: false,
+    enabled: tokenReady,
   });
 
   const user = data?.data || null;
 
   useEffect(() => {
-    // Auth Protection Check
-    if (!isLoading && error && !user) {
+    if (tokenReady && !isLoading && error && !user) {
       const isDemo = typeof window !== 'undefined' && localStorage.getItem('dispatch_demo_mode') === 'true';
-      if (!isDemo) {
+      const hasToken = !!getToken();
+      if (!isDemo && !hasToken) {
         router.push(`/login?redirectTo=${encodeURIComponent(pathname)}`);
       }
     }
-  }, [isLoading, error, user, router, pathname]);
+  }, [tokenReady, isLoading, error, user, router, pathname]);
 
   return (
     <div className="flex h-screen w-screen bg-slate-50 overflow-hidden relative font-sans">
@@ -66,5 +82,13 @@ export default function DashboardLayout({ children }: { children: React.ReactNod
         }}
       />
     </div>
+  );
+}
+
+export default function DashboardLayout({ children }: { children: React.ReactNode }) {
+  return (
+    <Suspense fallback={<div className="flex items-center justify-center h-screen bg-slate-50 text-xs text-slate-400 font-mono">Initializing Dispatch Console...</div>}>
+      <DashboardContent>{children}</DashboardContent>
+    </Suspense>
   );
 }

@@ -4,7 +4,7 @@ import { useState, useEffect } from 'react';
 import Link from 'next/link';
 import Image from 'next/image';
 import Background3D from '@/components/canvas/Background3D';
-import { fetchApi } from '@/lib/api-client';
+import { fetchApi, clearToken, getToken } from '@/lib/api-client';
 import { User } from '@/lib/types';
 import {
   Mail,
@@ -28,23 +28,26 @@ export default function LandingPage() {
   const [user, setUser] = useState<User | null>(null);
 
   useEffect(() => {
-    fetchApi('/auth/me')
-      .then((res) => {
-        if (res?.data) setUser(res.data);
-      })
-      .catch(() => {
-        setUser(null);
-      });
+    const token = getToken();
+    if (token) {
+      fetchApi('/auth/me')
+        .then((res) => {
+          if (res?.data) setUser(res.data);
+        })
+        .catch(() => {
+          setUser(null);
+        });
+    }
   }, []);
 
   const handleLogout = async () => {
     try {
       await fetchApi('/auth/logout', { method: 'POST' });
-      localStorage.removeItem('dispatch_demo_mode');
-      setUser(null);
     } catch (e) {
-      setUser(null);
+      // ignore
     }
+    clearToken();
+    setUser(null);
   };
 
   // Calculator Math

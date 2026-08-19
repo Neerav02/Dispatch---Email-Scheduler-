@@ -242,14 +242,8 @@ export const authController = {
         { expiresIn: '7d' }
       );
 
-      res.cookie('dispatch_session', token, {
-        httpOnly: true,
-        secure: config.nodeEnv === 'production',
-        sameSite: 'lax',
-        maxAge: 7 * 24 * 60 * 60 * 1000,
-      });
-
-      return res.redirect(`${targetFrontend}/dashboard`);
+      // Pass token via URL for cross-domain auth (frontend stores it in localStorage)
+      return res.redirect(`${targetFrontend}/dashboard?token=${encodeURIComponent(token)}`);
     } catch (error: any) {
       logger.error('Google callback error:', error);
       return res.redirect(`${targetFrontend}/login?error=oauth_failed`);

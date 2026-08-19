@@ -4,8 +4,8 @@ import { useState, Suspense } from 'react';
 import { useRouter, useSearchParams } from 'next/navigation';
 import { Mail, Lock, User, ArrowRight, ShieldCheck, CheckCircle2, AlertCircle } from 'lucide-react';
 import { motion, AnimatePresence } from 'framer-motion';
+import { API_BASE_URL, setToken } from '@/lib/api-client';
 
-const API_BASE_URL = process.env.NEXT_PUBLIC_API_BASE_URL || 'https://dispatch-api-o2bf.onrender.com/api';
 const API_ORIGIN = API_BASE_URL.replace(/\/api\/?$/, '');
 
 function LoginContent() {
@@ -44,7 +44,6 @@ function LoginContent() {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify(payload),
-        credentials: 'include',
       });
 
       const data = await res.json();
@@ -53,6 +52,10 @@ function LoginContent() {
         throw new Error(data?.error?.message || 'Authentication failed');
       }
 
+      // Store JWT token in localStorage for cross-domain auth
+      if (data?.data?.token) {
+        setToken(data.data.token);
+      }
       localStorage.removeItem('dispatch_demo_mode');
       router.push(redirectTo);
     } catch (err: any) {
@@ -69,13 +72,12 @@ function LoginContent() {
       const res = await fetch(`${API_BASE_URL}/auth/demo`, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        credentials: 'include',
       });
-      if (res.ok) {
-        router.push(redirectTo);
-      } else {
-        router.push(redirectTo);
+      const data = await res.json();
+      if (data?.data?.token) {
+        setToken(data.data.token);
       }
+      router.push(redirectTo);
     } catch (e) {
       router.push(redirectTo);
     } finally {
