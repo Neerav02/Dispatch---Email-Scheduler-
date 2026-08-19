@@ -2,6 +2,7 @@ import { app } from './app';
 import { config } from './config';
 import { logger } from './lib/logger';
 import { emailQueue } from './queue/email.queue';
+import { emailWorker } from './queue/email.worker';
 import { reconcileOnBoot } from './queue/reconcile';
 
 async function startServer() {
@@ -10,7 +11,7 @@ async function startServer() {
     await reconcileOnBoot(emailQueue);
 
     app.listen(config.port, () => {
-      logger.info(`🚀 Dispatch Tower Express API listening on port ${config.port} [${config.nodeEnv}]`);
+      logger.info(`🚀 Dispatch Tower Express API & BullMQ Worker listening on port ${config.port} [${config.nodeEnv}]`);
       logger.info(`📡 Health Check URL: http://localhost:${config.port}/health`);
     });
   } catch (error) {
@@ -18,5 +19,18 @@ async function startServer() {
     process.exit(1);
   }
 }
+
+// Graceful Shutdown Handlers
+process.on('SIGTERM', async () => {
+  logger.info('SIGTERM received. Closing worker...');
+  await emailWorker.close();
+  process.exit(0);
+});
+
+process.on('SIGINT', async () => {
+  logger.info('SIGINT received. Closing worker...');
+  await emailWorker.close();
+  process.exit(0);
+});
 
 startServer();
