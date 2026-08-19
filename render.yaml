@@ -13,6 +13,8 @@ services:
         value: 5000
       - key: DATABASE_URL
         sync: false
+      - key: REDIS_URL
+        sync: false
       - key: REDIS_HOST
         sync: false
       - key: REDIS_PORT
@@ -33,6 +35,8 @@ services:
       - key: NODE_ENV
         value: production
       - key: DATABASE_URL
+        sync: false
+      - key: REDIS_URL
         sync: false
       - key: REDIS_HOST
         sync: false

@@ -9,6 +9,7 @@ const envSchema = z.object({
   NODE_ENV: z.enum(['development', 'production', 'test']).default('development'),
   FRONTEND_URL: z.string().default('http://localhost:3000'),
   DATABASE_URL: z.string(),
+  REDIS_URL: z.string().optional().default(''),
   REDIS_HOST: z.string().default('localhost'),
   REDIS_PORT: z.string().default('6379'),
   GOOGLE_CLIENT_ID: z.string().optional().default(''),
@@ -31,6 +32,7 @@ export const config = {
   nodeEnv: parsedEnv.data.NODE_ENV,
   frontendUrl: parsedEnv.data.FRONTEND_URL,
   databaseUrl: parsedEnv.data.DATABASE_URL,
+  redisUrl: parsedEnv.data.REDIS_URL,
   redisHost: parsedEnv.data.REDIS_HOST,
   redisPort: parseInt(parsedEnv.data.REDIS_PORT, 10),
   google: {
