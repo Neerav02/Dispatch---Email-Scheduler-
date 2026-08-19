@@ -4,11 +4,29 @@
 
 ---
 
+## 🛠 Tech Stack
+
+| Layer | Technology / Tool | Purpose & Architectural Role |
+|---|---|---|
+| **Frontend Framework** | **Next.js 14 (App Router)** + TypeScript | Server-side rendering, layout nesting, middleware auth protection |
+| **3D & Visual Graphics** | **Three.js** & **React Three Fiber** (`@react-three/fiber`, `@react-three/drei`) | Interactive 3D particle mesh landing page & 3D Runway visualizer |
+| **Styling & Motion** | **Tailwind CSS** + **Framer Motion** | Hand-crafted "Ember Velvet" design tokens, smooth spring transitions |
+| **State & Polling** | **TanStack Query (React Query)** | Live 5-second automatic queue polling for scheduled & sent emails |
+| **CSV Engine** | **PapaParse** + Client Regex Validator | Client-side recipient CSV parsing, validation, and malformed warning bounds |
+| **Backend API** | **Node.js 20 LTS** + **Express.js** + TypeScript | RESTful API endpoints, request validation, authentication routes |
+| **Database & ORM** | **PostgreSQL 16** + **Prisma ORM** | Relational single source of truth for Users, Senders, Campaigns, Emails |
+| **Queue Engine** | **BullMQ v5** + **Redis 7** (`ioredis`) | Millisecond-precision delayed job queue execution (Zero cron jobs) |
+| **Auth System** | **Passport.js** (Google OAuth 2.0) + **JWT** | Google OAuth cookie session management + Instant Demo Sandbox fallback |
+| **Email Transport** | **Nodemailer** + **Ethereal SMTP Integration** | Automated test account creation with live web message preview URLs |
+| **Infrastructure** | **Docker & Docker Compose** | Isolated containers: PostgreSQL (`5433:5432`) & Redis (`6380:6379`) |
+
+---
+
 ## 📑 Table of Contents
 1. [Executive Summary & Product Vision](#-executive-summary--product-vision)
 2. [Requirement vs. Implementation Mapping Matrix](#-requirement-vs-implementation-mapping-matrix)
-3. [Technology Stack](#-technology-stack)
-4. [System Architecture & Data Flow](#-system-architecture--data-flow)
+3. [System Architecture](#-system-architecture)
+4. [End-to-End Data Flow](#-end-to-end-data-flow)
 5. [Core Engine Mechanics & Reliability Logic](#-core-engine-mechanics--reliability-logic)
    - [5.1 Bulk Scheduling & Hourly Window Spillover Math](#51-bulk-scheduling--hourly-window-spillover-math)
    - [5.2 How Persistence & Restart Recovery Work (`reconcileOnBoot`)](#52-how-persistence--restart-recovery-work-reconcileonboot)
@@ -55,32 +73,7 @@ Coupled with this rock-solid backend engine is an **interactive 3D Air-Traffic C
 
 ---
 
-## 🛠 Technology Stack
-
-### Frontend Architecture
-- **Framework**: Next.js 14 (App Router) with TypeScript
-- **3D Graphics**: Three.js & React Three Fiber (`@react-three/fiber`, `@react-three/drei`)
-- **Animations**: Framer Motion (Smooth spring transitions & drawer slides)
-- **Styling**: Vanilla CSS Variables & Tailwind CSS (Custom Ember Velvet Tokens)
-- **State & Data Polling**: TanStack Query (React Query) with 5-second automatic queue refresh
-- **CSV Processing**: PapaParse & Client-side regex validator
-
-### Backend Architecture
-- **Runtime**: Node.js 20 LTS + TypeScript (`ts-node-dev`)
-- **API Framework**: Express.js with Modular Route Controllers
-- **Database & ORM**: PostgreSQL 16 + Prisma ORM (Type-safe models & migrations)
-- **Queue Engine**: BullMQ v5 + Redis 7 (`ioredis`)
-- **Authentication**: Passport.js (Google OAuth 2.0 Strategy) + JWT (`jsonwebtoken`)
-- **Email Delivery**: Nodemailer + Ethereal SMTP Test Account Integration
-- **Logging**: Winston logger with structured timestamps & colorized terminal output
-
-### Infrastructure & Operations
-- **Containerization**: Docker Compose (`docker-compose.yml`) running PostgreSQL (Port 5433) & Redis (Port 6380)
-- **Restart Safety Engine**: Native boot reconciler (`reconcileOnBoot`)
-
----
-
-## 🔄 System Architecture & Data Flow
+## 🏗 System Architecture
 
 ```
 ┌────────────────────────────────────────────────────────────────────────┐
@@ -126,6 +119,53 @@ Coupled with this rock-solid backend engine is an **interactive 3D Air-Traffic C
                                                   │ - Ethereal SMTP send │
                                                   │ - DB status update   │
                                                   └──────────────────────┘
+```
+
+---
+
+## 🔄 End-to-End Data Flow
+
+The following sequence illustrates how a user action on the frontend traverses the entire stack down to SMTP dispatch:
+
+```
+[ User ] 
+   │
+   │ 1. Upload CSV & Click "Dispatch Campaign"
+   ▼
+[ Next.js Frontend ] 
+   │
+   │ 2. POST /api/campaigns (Payload: senderId, subject, body, recipients, maxPerHour)
+   ▼
+[ Express API Server ]
+   │
+   ├──► 3a. Create Campaign & ScheduledEmail rows in PostgreSQL (status = 'queued')
+   │
+   └──► 3b. Calculate sendAt timestamps with hourly window spillover math
+   │
+   └──► 3c. Add delayed jobs to Redis BullMQ queue (delay = sendAt - now(), jobId = email.id)
+   ▼
+[ Redis (BullMQ Queue) ]
+   │
+   │ 4. Delayed timer expires at exact sendAt timestamp
+   ▼
+[ BullMQ Worker Process ]
+   │
+   ├──► 5. Execute atomic Redis check: INCR rate:{senderId}:{currentHourKey}
+   │
+   ├──► IF Over Cap:
+   │       • Update DB status = 'holding', heldReason = 'Hourly cap reached'
+   │       • Reschedule job to top of next hour window in BullMQ
+   │
+   └──► IF Under Cap:
+           • Send email via Nodemailer (Ethereal SMTP)
+           • Capture Ethereal live message preview URL (etherealUrl)
+           • Update DB status = 'sent', sentAt = timestamp
+   ▼
+[ Frontend Dashboard ]
+   │
+   │ 6. TanStack Query 5-second polling updates 3D Runway visualizer & status tables live
+   ▼
+[ Complete ]
 ```
 
 ---
