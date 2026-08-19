@@ -9,6 +9,8 @@ services:
     envVars:
       - key: NODE_ENV
         value: production
+      - key: NODE_VERSION
+        value: 20.18.0
       - key: PORT
         value: 5000
       - key: DATABASE_URL
@@ -34,6 +36,8 @@ services:
     envVars:
       - key: NODE_ENV
         value: production
+      - key: NODE_VERSION
+        value: 20.18.0
       - key: DATABASE_URL
         sync: false
       - key: REDIS_URL
