@@ -2,6 +2,7 @@ import { Router } from 'express';
 import passport from 'passport';
 import { authController } from './auth.controller';
 import { requireAuth } from '../../middleware/auth';
+import { config } from '../../config';
 
 const router = Router();
 
@@ -22,7 +23,9 @@ router.post('/logout', authController.logout);
 router.get('/google', passport.authenticate('google', { scope: ['profile', 'email'] }));
 router.get(
   '/google/callback',
-  passport.authenticate('google', { failureRedirect: 'http://localhost:3000/login?error=oauth_failed', session: false }),
+  (req, res, next) => {
+    passport.authenticate('google', { failureRedirect: `${config.frontendUrl}/login?error=oauth_failed`, session: false })(req, res, next);
+  },
   authController.googleCallback
 );
 

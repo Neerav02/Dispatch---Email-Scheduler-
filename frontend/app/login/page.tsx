@@ -5,6 +5,9 @@ import { useRouter, useSearchParams } from 'next/navigation';
 import { Mail, Lock, User, ArrowRight, ShieldCheck, CheckCircle2, AlertCircle } from 'lucide-react';
 import { motion, AnimatePresence } from 'framer-motion';
 
+const API_BASE_URL = process.env.NEXT_PUBLIC_API_BASE_URL || 'http://localhost:5000/api';
+const API_ORIGIN = API_BASE_URL.replace(/\/api\/?$/, '');
+
 function LoginContent() {
   const router = useRouter();
   const searchParams = useSearchParams();
@@ -34,10 +37,10 @@ function LoginContent() {
     setIsLoading(true);
 
     try {
-      const endpoint = mode === 'register' ? '/api/auth/register' : '/api/auth/login';
+      const endpoint = mode === 'register' ? '/auth/register' : '/auth/login';
       const payload = mode === 'register' ? { name, email, password } : { email, password };
 
-      const res = await fetch(`http://localhost:5000${endpoint}`, {
+      const res = await fetch(`${API_BASE_URL}${endpoint}`, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify(payload),
@@ -63,7 +66,7 @@ function LoginContent() {
     setIsDemoLoading(true);
     try {
       localStorage.setItem('dispatch_demo_mode', 'true');
-      const res = await fetch('http://localhost:5000/api/auth/demo', {
+      const res = await fetch(`${API_BASE_URL}/auth/demo`, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         credentials: 'include',
@@ -81,7 +84,7 @@ function LoginContent() {
   };
 
   const handleGoogleLogin = () => {
-    window.location.href = 'http://localhost:5000/api/auth/google';
+    window.location.href = `${API_ORIGIN}/api/auth/google`;
   };
 
   return (

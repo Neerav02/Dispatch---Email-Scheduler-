@@ -39,10 +39,7 @@ export default function LandingPage() {
 
   const handleLogout = async () => {
     try {
-      await fetch('http://localhost:5000/api/auth/logout', {
-        method: 'POST',
-        credentials: 'include',
-      });
+      await fetchApi('/auth/logout', { method: 'POST' });
       localStorage.removeItem('dispatch_demo_mode');
       setUser(null);
     } catch (e) {
